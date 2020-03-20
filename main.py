@@ -26,7 +26,7 @@ def make_adjacency_matrix(nodes):
 def get_path_length(matrix, order):
     length = 0
     for i in range(len(order) - 1):
-        length += matrix[order[i]][order[i+1]]
+        length += matrix[order[i]][order[i + 1]]
     return length + matrix[order[-1]][order[0]]
 
 
@@ -34,10 +34,7 @@ def find_combinations(matrix, order, node):
     comb = []
     for z in range(1, len(order) + 1):
         combination = order[:]
-        if z == len(order):
-            combination.append(node)
-        else:
-            combination.insert(z, node)
+        combination.insert(z, node)
         value = get_path_length(matrix, combination)
         comb.append((combination, value))
     return sorted(comb, key=operator.itemgetter(1))
@@ -74,35 +71,34 @@ def show_graph(nodes, order):
 def make_regret_comb(k, matrix, order, node):
     comb = find_combinations(matrix, order, node)
     regret = 0
-    for i in comb[:k+1]:
+    for i in comb[:k + 1]:
         regret += i[1] - comb[0][1]
     return [comb, regret]
 
 
 def select_second_element():
     order_list = []
-    start_nodes = random.sample(range(100), 50)
-
-    order_list.append(start_nodes[0])
+    start_node = random.choice(range(100))
+    order_list.append(start_node)
 
     min_value = sorted(adjacency_matrix[order_list[0]])[1]
     index2 = adjacency_matrix[order_list[0]].tolist().index(min_value)
 
     order_list.append(index2)
-    return  order_list
+    return order_list
 
 
 def greedy_cycle():
     order_list = select_second_element()
 
     for i in range(cycle_size - 2):
-        print(i)
         temp = []
         for t in range(len(p.node_coords)):
             if t not in order_list:
                 temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t))
         order_list, min_legth = min(temp, key=operator.itemgetter(1))
     show_graph(p.node_coords, order_list)
+    return order_list
 
 
 def regret(k):
@@ -115,11 +111,17 @@ def regret(k):
                 temp.append(make_regret_comb(k, adjacency_matrix, order_list, t))
 
         order_list = max(temp, key=operator.itemgetter(1))[0][0][0]
-        show_graph(p.node_coords, order_list)
+    show_graph(p.node_coords, order_list)
+    return order_list
 
 
-cycle_size = round(len(p.node_coords)/2)
-print(cycle_size)
+cycle_size = round(int(np.ceil(len(p.node_coords) / 2)))
+print('Cycle size: ', cycle_size)
+
 adjacency_matrix = make_adjacency_matrix(p.node_coords)
 
-greedy_cycle()
+# result = greedy_cycle()
+result = regret(1)
+
+print(f'Number of nodes in cycle: {len(result)}')
+print(f'Cycle length: {get_path_length(adjacency_matrix, result)}')
