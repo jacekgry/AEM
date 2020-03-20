@@ -4,7 +4,7 @@ import random
 import operator
 import matplotlib.pyplot as plt
 
-filename = 'kroA100.tsp'
+filename = 'kroB100.tsp'
 
 p: tsp.Problem = tsp.load_problem(filename)
 
@@ -104,7 +104,7 @@ def greedy_cycle():
 def regret(k):
     order_list = select_second_element()
 
-    for i in range(cycle_size):
+    for i in range(cycle_size - 2):
         temp = []
         for t in range(len(p.node_coords)):
             if t not in order_list:
