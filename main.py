@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 filename = 'kroB100.tsp'
 
-p: tsp.Problem = tsp.load_problem(filename)
+problem: tsp.Problem = tsp.load_problem(filename)
 
 
 def euclidean_distance(node1, node2):
@@ -76,52 +76,40 @@ def make_regret_comb(k, matrix, order, node):
     return [comb, regret]
 
 
-def select_second_element():
-    order_list = []
-    start_node = random.choice(range(100))
-    order_list.append(start_node)
-
-    min_value = sorted(adjacency_matrix[order_list[0]])[1]
-    index2 = adjacency_matrix[order_list[0]].tolist().index(min_value)
-
-    order_list.append(index2)
-    return order_list
-
-
 def greedy_cycle():
-    order_list = select_second_element()
+    order_list = [random.randrange(len(problem.node_coords))]
 
-    for i in range(cycle_size - 2):
+    for i in range(cycle_size - 1):
         temp = []
-        for t in range(len(p.node_coords)):
+        for t in range(len(problem.node_coords)):
             if t not in order_list:
                 temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t))
-        order_list, min_legth = min(temp, key=operator.itemgetter(1))
-    show_graph(p.node_coords, order_list)
+        order_list, _ = min(temp, key=operator.itemgetter(1))
+    show_graph(problem.node_coords, order_list)
     return order_list
 
 
 def regret(k):
-    order_list = select_second_element()
+    order_list = [random.randrange(len(problem.node_coords))]
 
-    for i in range(cycle_size - 2):
+    for i in range(cycle_size - 1):
         temp = []
-        for t in range(len(p.node_coords)):
+        for t in range(len(problem.node_coords)):
             if t not in order_list:
                 temp.append(make_regret_comb(k, adjacency_matrix, order_list, t))
 
         order_list = max(temp, key=operator.itemgetter(1))[0][0][0]
-    show_graph(p.node_coords, order_list)
+    show_graph(problem.node_coords, order_list)
     return order_list
 
 
-cycle_size = round(int(np.ceil(len(p.node_coords) / 2)))
+cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
 print('Cycle size: ', cycle_size)
 
-adjacency_matrix = make_adjacency_matrix(p.node_coords)
+adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 
-# result = greedy_cycle()
-result = regret(1)
+result = greedy_cycle()
+# result = regret(1)
 
 print(f'Number of nodes in cycle: {len(result)}')
 print(f'Cycle length: {get_path_length(adjacency_matrix, result)}')
