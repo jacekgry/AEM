@@ -3,10 +3,11 @@ import numpy as np
 import random
 import operator
 import matplotlib.pyplot as plt
+import sys
 
-filename = 'kroB100.tsp'
-
-problem: tsp.Problem = tsp.load_problem(filename)
+instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA100'
+problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
+random.seed = 42
 
 
 def euclidean_distance(node1, node2):
@@ -45,7 +46,7 @@ def greedy_cycle_best_comb(matrix, order, node):
     return min(comb, key=operator.itemgetter(1))
 
 
-def show_graph(nodes, order):
+def save_graph(nodes, order, graph_filename):
     plt.clf()
 
     x = []
@@ -65,7 +66,7 @@ def show_graph(nodes, order):
     plt.scatter(x, y, color='blue')
     plt.plot(new_x, new_y, color='red')
 
-    plt.show()
+    plt.savefig(f'{instance_name}/{graph_filename}.png')
 
 
 def make_regret_comb(k, matrix, order, node):
@@ -76,8 +77,8 @@ def make_regret_comb(k, matrix, order, node):
     return [comb, regret]
 
 
-def greedy_cycle():
-    order_list = [random.randrange(len(problem.node_coords))]
+def greedy_cycle(start_node):
+    order_list = [start_node]
 
     for i in range(cycle_size - 1):
         temp = []
@@ -85,12 +86,12 @@ def greedy_cycle():
             if t not in order_list:
                 temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t))
         order_list, _ = min(temp, key=operator.itemgetter(1))
-    show_graph(problem.node_coords, order_list)
+    save_graph(problem.node_coords, order_list, f'greedy{start_node}')
     return order_list
 
 
-def regret(k):
-    order_list = [random.randrange(len(problem.node_coords))]
+def regret(start_node, k=1):
+    order_list = [start_node]
 
     for i in range(cycle_size - 1):
         temp = []
@@ -99,17 +100,50 @@ def regret(k):
                 temp.append(make_regret_comb(k, adjacency_matrix, order_list, t))
 
         order_list = max(temp, key=operator.itemgetter(1))[0][0][0]
-    show_graph(problem.node_coords, order_list)
+    save_graph(problem.node_coords, order_list, f'regret{start_node}')
     return order_list
 
 
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
-print('Cycle size: ', cycle_size)
-
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 
-result = greedy_cycle()
-# result = regret(1)
+results_file = open(f'results_{instance_name}.csv', 'w')
+sys.stdout = results_file
+print('start_node', end=',')
+print('greedy', end=',')
+print('regret')
 
-print(f'Number of nodes in cycle: {len(result)}')
-print(f'Cycle length: {get_path_length(adjacency_matrix, result)}')
+greedy_results = []
+regret_results = []
+# start_nodes = random.sample(range(100), 10)
+for start_node in range(100):
+    print(start_node, end=',')
+    result_greedy = greedy_cycle(start_node)
+    greedy_length = get_path_length(adjacency_matrix, result_greedy)
+    greedy_results.append(greedy_length)
+    print(greedy_length, end=',')
+
+    result_regret = regret(start_node)
+    regret_length = get_path_length(adjacency_matrix, result_regret)
+    regret_results.append(regret_length)
+    print(regret_length)
+
+    if len(result_greedy) != cycle_size:
+        print("wrong cycle size of greedy result")
+        exit(-1)
+
+    if len(result_greedy) != cycle_size:
+        print("wrong cycle size of regret result")
+        exit(-1)
+
+print('MIN', end=',')
+print(min(greedy_results), end=',')
+print(min(regret_results))
+print('MAX', end=',')
+print(max(greedy_results), end=',')
+print(max(regret_results))
+print('AVG', end=',')
+print(np.mean(greedy_results), end=',')
+print(np.mean(regret_results))
+
+results_file.close()
