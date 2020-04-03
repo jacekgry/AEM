@@ -65,8 +65,8 @@ def save_graph(nodes, order, graph_filename):
 
     plt.scatter(x, y, color='blue')
     plt.plot(new_x, new_y, color='red')
-
-    plt.savefig(f'{instance_name}/{graph_filename}.png')
+    plt.show()
+    # plt.savefig(f'{instance_name}/{graph_filename}.png')
 
 
 def make_regret_comb(k, matrix, order, node):
@@ -104,46 +104,102 @@ def regret(start_node, k=1):
     return order_list
 
 
+def delta_swap(new_point, distance, old_point, neighbors):
+    new_dist = adjacency_matrix[new_point][neighbors[1]] + adjacency_matrix[new_point][neighbors[0]]
+    old_dist = adjacency_matrix[old_point][neighbors[0]] + adjacency_matrix[old_point][neighbors[1]]
+    if new_dist < old_dist:
+        return distance - old_dist + new_dist
+    return distance
+
+
+def find_first_better_point(rest_points, neighbors, point, index, distance):
+    for index2, z in enumerate(rest_points):
+        new_dist = delta_swap(z, distance, point, neighbors)
+        if new_dist != distance:
+            start_solution[index] = z
+            rest_points[index2] = point
+            return rest_points, start_solution, new_dist
+    return rest_points, start_solution, distance
+
+
+def find_best_point(rest_points, neighbors, point, index, distance):
+    for index2, z in enumerate(rest_points):
+        new_dist = delta_swap(z, distance, point, neighbors)
+        if new_dist != distance:
+            start_solution[index] = z
+            rest_points[index2] = point
+            distance = new_dist
+            point = z
+    return rest_points, start_solution, distance
+
+
+
+def greedy_local_search_1(start_solution, rest_points, distance):
+    for index, point in enumerate(start_solution):
+        neighbors = [start_solution[(index-1) % cycle_size], start_solution[(index+1) % cycle_size]]
+        rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, point, index, distance)
+
+    print(start_solution, distance)
+
+
+def steepest_local_search_1(start_solution, rest_points, distance):
+    for index, point in enumerate(start_solution):
+        neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
+        rest_points, start_solution, distance = find_best_point(rest_points, neighbors, point, index, distance)
+        random.shuffle(rest_points)
+    print(start_solution, distance)
+
+
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
+
+start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
+rest_points = [x for x in range(100) if x not in start_solution]
+
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
+start_distance = get_path_length(adjacency_matrix, start_solution)
+print(start_solution, start_distance)
 
-results_file = open(f'results_{instance_name}.csv', 'w')
-sys.stdout = results_file
-print('start_node', end=',')
-print('greedy', end=',')
-print('regret')
+steepest_local_search_1(start_solution, rest_points, start_distance)
 
-greedy_results = []
-regret_results = []
-# start_nodes = random.sample(range(100), 10)
-for start_node in range(100):
-    print(start_node, end=',')
-    result_greedy = greedy_cycle(start_node)
-    greedy_length = get_path_length(adjacency_matrix, result_greedy)
-    greedy_results.append(greedy_length)
-    print(greedy_length, end=',')
 
-    result_regret = regret(start_node)
-    regret_length = get_path_length(adjacency_matrix, result_regret)
-    regret_results.append(regret_length)
-    print(regret_length)
 
-    if len(result_greedy) != cycle_size:
-        print("wrong cycle size of greedy result")
-        exit(-1)
-
-    if len(result_greedy) != cycle_size:
-        print("wrong cycle size of regret result")
-        exit(-1)
-
-print('MIN', end=',')
-print(min(greedy_results), end=',')
-print(min(regret_results))
-print('MAX', end=',')
-print(max(greedy_results), end=',')
-print(max(regret_results))
-print('AVG', end=',')
-print(np.mean(greedy_results), end=',')
-print(np.mean(regret_results))
-
-results_file.close()
+# results_file = open(f'results_{instance_name}.csv', 'w')
+# sys.stdout = results_file
+# print('start_node', end=',')
+# print('greedy', end=',')
+# print('regret')
+#
+# greedy_results = []
+# regret_results = []
+# # start_nodes = random.sample(range(100), 10)
+# for start_node in range(100):
+#     print(start_node, end=',')
+#     result_greedy = greedy_cycle(start_node)
+#     greedy_length = get_path_length(adjacency_matrix, result_greedy)
+#     greedy_results.append(greedy_length)
+#     print(greedy_length, end=',')
+#
+#     result_regret = regret(start_node)
+#     regret_length = get_path_length(adjacency_matrix, result_regret)
+#     regret_results.append(regret_length)
+#     print(regret_length)
+#
+#     if len(result_greedy) != cycle_size:
+#         print("wrong cycle size of greedy result")
+#         exit(-1)
+#
+#     if len(result_greedy) != cycle_size:
+#         print("wrong cycle size of regret result")
+#         exit(-1)
+#
+# print('MIN', end=',')
+# print(min(greedy_results), end=',')
+# print(min(regret_results))
+# print('MAX', end=',')
+# print(max(greedy_results), end=',')
+# print(max(regret_results))
+# print('AVG', end=',')
+# print(np.mean(greedy_results), end=',')
+# print(np.mean(regret_results))
+#
+# results_file.close()
