@@ -104,9 +104,14 @@ def regret(start_node, k=1):
     return order_list
 
 
-def delta_swap(new_point, distance, old_point, neighbors):
-    new_dist = adjacency_matrix[new_point][neighbors[1]] + adjacency_matrix[new_point][neighbors[0]]
-    old_dist = adjacency_matrix[old_point][neighbors[0]] + adjacency_matrix[old_point][neighbors[1]]
+def delta_swap(new_point, distance, old_point, neighbors, neighbors2=None):
+    new_dist = 0
+    old_dist = 0
+    if neighbors2 is not None:
+        new_dist += adjacency_matrix[old_point][neighbors2[0]] + adjacency_matrix[old_point][neighbors2[1]]
+        old_dist += adjacency_matrix[new_point][neighbors2[1]] + adjacency_matrix[new_point][neighbors2[0]]
+    new_dist += adjacency_matrix[new_point][neighbors[1]] + adjacency_matrix[new_point][neighbors[0]]
+    old_dist += adjacency_matrix[old_point][neighbors[0]] + adjacency_matrix[old_point][neighbors[1]]
     if new_dist < old_dist:
         return distance - old_dist + new_dist
     return distance
@@ -133,21 +138,104 @@ def find_best_point(rest_points, neighbors, point, index, distance):
     return rest_points, start_solution, distance
 
 
+def find_best_swap(solution, point, index, distance, neighbors):
+    for index2, z in enumerate(solution):
+        if index2 != index:
+            neighbors2 = [solution[(index2-1) % cycle_size], solution[(index2+1) % cycle_size]]
+            new_dist = delta_swap(z, distance, point, neighbors, neighbors2)
+            if new_dist != distance:
+                start_solution[index] = z
+                start_solution[index2] = point
+                distance = new_dist
+                point = z
+                if abs(index - index2) == 1:
+                    neighbors = [solution[(index - 1) % cycle_size], solution[(index + 1) % cycle_size]]
+    return start_solution, distance
 
+
+def find_first_better_swap(solution, point, index, distance, neighbors):
+    for index2, z in enumerate(solution):
+        if index2 != index:
+            neighbors2 = [solution[(index2-1) % cycle_size], solution[(index2+1) % cycle_size]]
+            new_dist = delta_swap(z, distance, point, neighbors, neighbors2)
+            if new_dist != distance:
+                start_solution[index] = z
+                start_solution[index2] = point
+                distance = new_dist
+                return start_solution, distance
+    return start_solution, distance
+
+
+def delta_edges(neighbors, start, end, distance):
+    new_dist = adjacency_matrix[start][neighbors[1]] + adjacency_matrix[end][neighbors[0]]
+    old_dist = adjacency_matrix[start][neighbors[0]] + adjacency_matrix[end][neighbors[1]]
+    if new_dist < old_dist:
+        return distance - old_dist + new_dist
+    return distance
+
+
+def find_first_better_edges(solution, index, distance):
+    for i in range(index+1, cycle_size):
+        neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
+        new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
+        if new_dist != distance:
+            distance = new_dist
+            solution[index:(i+1) % cycle_size] = solution[index:(i+1) % cycle_size][::-1]
+            return solution, distance
+    return solution, distance
+
+
+def find_best_edges(solution, index, distance):
+    for i in range(index+1, cycle_size):
+        neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
+        new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
+        if new_dist != distance:
+            distance = new_dist
+            solution[index:(i+1) % cycle_size] = solution[index:(i+1) % cycle_size][::-1]
+    return solution, distance
+
+
+#wewnatrz - wierzcholki
 def greedy_local_search_1(start_solution, rest_points, distance):
+    choice = np.random.choice(2, cycle_size, replace=True)
     for index, point in enumerate(start_solution):
         neighbors = [start_solution[(index-1) % cycle_size], start_solution[(index+1) % cycle_size]]
-        rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, point, index, distance)
-
+        if choice[index] == 0:
+            rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, point, index, distance)
+        else:
+            start_solution, distance = find_first_better_swap(start_solution, point, index, distance, neighbors)
     print(start_solution, distance)
 
 
+#wewnatrz - wierzcholkowy
 def steepest_local_search_1(start_solution, rest_points, distance):
     for index, point in enumerate(start_solution):
         neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
+        #zewnatrz trasowy
         rest_points, start_solution, distance = find_best_point(rest_points, neighbors, point, index, distance)
-        random.shuffle(rest_points)
+        #wewnatrz
+        start_solution, distance = find_best_swap(start_solution, point, index, distance, neighbors)
     print(start_solution, distance)
+
+
+#wewnatrz - krawedzie
+def greedy_local_search_2(start_solution, rest_points, distance):
+    choice = np.random.choice(2, cycle_size, replace=True)
+    for index, point in enumerate(start_solution):
+        neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
+        if choice[index] == 0:
+            rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, point, index, distance)
+        else:
+           start_solution, distance = find_first_better_edges(start_solution, index, distance)
+    print(start_solution, distance)
+
+
+#wewnatrz - krawedzie
+def steepest_local_search_2(start_solution, rest_points, distance):
+    for index, point in enumerate(start_solution):
+        neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
+        rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, point, index, distance)
+        start_solution, distance = find_best_edges(start_solution, index, distance)
 
 
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
