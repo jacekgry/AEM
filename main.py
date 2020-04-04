@@ -117,7 +117,7 @@ def delta_swap(new_point, distance, old_point, neighbors, neighbors2=None):
     return distance
 
 
-def find_firsold_pointt_better_point(rest_points, neighbors, point, index, distance):
+def find_first_better_point(rest_points, neighbors, point, index, distance):
     for index2, z in enumerate(rest_points):
         new_dist = delta_swap(z, distance, point, neighbors)
         if new_dist != distance:
@@ -176,23 +176,29 @@ def delta_edges(neighbors, start, end, distance):
 
 
 def find_first_better_edges(solution, index, distance):
-    for i in range(index+1, cycle_size):
+    for i in range(index+1, cycle_size-1):
         neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
         new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
         if new_dist != distance:
             distance = new_dist
-            solution[index:(i+1) % cycle_size] = solution[index:(i+1) % cycle_size][::-1]
+            if (i+1) % cycle_size == 0:
+                solution[index::] = solution[index::][::-1]
+            else:
+                solution[index:(i + 1) % cycle_size] = solution[index:(i + 1) % cycle_size][::-1]
             return solution, distance
     return solution, distance
 
 
 def find_best_edges(solution, index, distance):
-    for i in range(index+1, cycle_size):
+    for i in range(index+1, cycle_size-1):
         neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
         new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
         if new_dist != distance:
             distance = new_dist
-            solution[index:(i+1) % cycle_size] = solution[index:(i+1) % cycle_size][::-1]
+            if (i + 1) % cycle_size == 0:
+                solution[index::] = solution[index::][::-1]
+            else:
+                solution[index:i + 1] = solution[index:i + 1][::-1]
     return solution, distance
 
 
@@ -213,7 +219,7 @@ def steepest_local_search_1(start_solution, rest_points, distance):
     for index in range(cycle_size):
         neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
         #zewnatrz trasowy
-        # rest_points, start_solution, distance = find_best_point(rest_points, neighbors, index, distance)
+        rest_points, start_solution, distance = find_best_point(rest_points, neighbors, index, distance)
         #wewnatrz
         start_solution, distance = find_best_swap(start_solution, index, distance, neighbors)
     print(distance)
@@ -227,8 +233,7 @@ def greedy_local_search_2(start_solution, rest_points, distance):
         if choice[index] == 0:
             rest_points, start_solution, distance = find_first_better_point(rest_points, neighbors, start_solution[index], index, distance)
         else:
-           start_solution, distance = find_first_better_edges(start_solution, index, distance)
-    print(distance)
+            start_solution, distance = find_first_better_edges(start_solution, index, distance)
 
 
 #wewnatrz - krawedzie
@@ -247,10 +252,11 @@ rest_points = [x for x in range(100) if x not in start_solution]
 
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 start_distance = get_path_length(adjacency_matrix, start_solution)
-print( start_distance)
+print(start_distance)
 
-steepest_local_search_1(start_solution, rest_points, start_distance)
-print(get_path_length(adjacency_matrix, start_solution))
+for q in range(100):
+    greedy_local_search_2(start_solution, rest_points, start_distance)
+    print(get_path_length(adjacency_matrix, start_solution))
 
 
 
