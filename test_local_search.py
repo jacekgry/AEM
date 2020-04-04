@@ -9,7 +9,7 @@ from aem import steepest_local_search_edges, steepest_local_search_vertices, \
     greedy_local_search_edges, greedy_local_search_vertices, get_path_length, adjacency_matrix, cycle_size, problem, \
     instance_name, save_graph
 
-no_of_tests = 2
+no_of_tests = 100
 results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
