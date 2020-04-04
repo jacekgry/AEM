@@ -1,16 +1,10 @@
-import tsplib95 as tsp
-import numpy as np
-import random
-import operator
-import matplotlib.pyplot as plt
-import sys
-from collections import defaultdict
-import time
 import itertools
+import operator
+import sys
 
-instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA100'
-problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
-random.seed = 42
+import matplotlib.pyplot as plt
+import numpy as np
+import tsplib95 as tsp
 
 
 def euclidean_distance(node1, node2):
@@ -68,8 +62,8 @@ def save_graph(nodes, order, graph_filename):
 
     plt.scatter(x, y, color='blue')
     plt.plot(new_x, new_y, color='red')
-    plt.show()
-    # plt.savefig(f'{instance_name}/{graph_filename}.png')
+    # plt.show()
+    plt.savefig(f'{instance_name}/{graph_filename}.png')
 
 
 def make_regret_comb(k, matrix, order, node):
@@ -238,7 +232,8 @@ def greedy_local_search_edges(start_sol, unused_vertices, start_dist):
                     if (idx_of_int + 1) % cycle_size == 0:
                         best_sol[index::] = best_sol[index::][::-1]
                     else:
-                        best_sol[index:(idx_of_int + 1) % cycle_size] = best_sol[index:(idx_of_int + 1) % cycle_size][::-1]
+                        best_sol[index:(idx_of_int + 1) % cycle_size] = best_sol[index:(idx_of_int + 1) % cycle_size][
+                                                                        ::-1]
                     best_distance = current_dist + delta
                     improved = True
                     break
@@ -279,7 +274,6 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
                     best_distance = current_dist + delta
                     improved = True
 
-
             for ext_idx, ext_vertex in enumerate(current_unused_vertices):
                 neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
                 delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
@@ -293,92 +287,7 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
     return current_sol, current_dist
 
 
+instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA100'
+problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
-
-# start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
-# rest_points = [x for x in range(100) if x not in start_solution]
-
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
-
-results = defaultdict(list)
-times = defaultdict(list)
-actual_distances = defaultdict(list)
-start_distances = []
-for _ in range(100):
-    start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
-    rest_points = [x for x in range(100) if x not in start_solution]
-    start_distance = get_path_length(adjacency_matrix, start_solution)
-    start_distances.append(start_distance)
-    for method in (
-            steepest_local_search_vertices,
-            steepest_local_search_edges,
-            greedy_local_search_vertices,
-            greedy_local_search_edges,
-    ):
-        s, r = start_solution.copy(), rest_points.copy()
-        start_time = time.time()
-        solution, dist = method(s, r, start_distance)
-        duration = time.time() - start_time
-        print('duration:', duration)
-        results[method.__name__].append(dist)
-        times[method.__name__].append(duration)
-        actual_distances[method.__name__].append(get_path_length(adjacency_matrix, solution))
-
-for method in (
-        steepest_local_search_vertices,
-        steepest_local_search_edges,
-        greedy_local_search_vertices,
-        greedy_local_search_edges,
-):
-    print(method.__name__)
-
-    print('avg,', np.mean(results[method.__name__]))
-    print('min,', np.min(results[method.__name__]))
-    print('max,', np.max(results[method.__name__]))
-
-    print('avg time,', np.mean(times[method.__name__]))
-
-    print('avg,', np.mean(actual_distances[method.__name__]))
-    print('min,', np.min(actual_distances[method.__name__]))
-    print('max,', np.max(actual_distances[method.__name__]))
-
-# results_file = open(f'results_{instance_name}.csv', 'w')
-# sys.stdout = results_file
-# print('start_node', end=',')
-# print('greedy', end=',')
-# print('regret')
-#
-# greedy_results = []
-# regret_results = []
-# # start_nodes = random.sample(range(100), 10)
-# for start_node in range(100):
-#     print(start_node, end=',')
-#     result_greedy = greedy_cycle(start_node)
-#     greedy_length = get_path_length(adjacency_matrix, result_greedy)
-#     greedy_results.append(greedy_length)
-#     print(greedy_length, end=',')
-#
-#     result_regret = regret(start_node)
-#     regret_length = get_path_length(adjacency_matrix, result_regret)
-#     regret_results.append(regret_length)
-#     print(regret_length)
-#
-#     if len(result_greedy) != cycle_size:
-#         print("wrong cycle size of greedy result")
-#         exit(-1)
-#
-#     if len(result_greedy) != cycle_size:
-#         print("wrong cycle size of regret result")
-#         exit(-1)
-#
-# print('MIN', end=',')
-# print(min(greedy_results), end=',')
-# print(min(regret_results))
-# print('MAX', end=',')
-# print(max(greedy_results), end=',')
-# print(max(regret_results))
-# print('AVG', end=',')
-# print(np.mean(greedy_results), end=',')
-# print(np.mean(regret_results))
-#
-# results_file.close()
