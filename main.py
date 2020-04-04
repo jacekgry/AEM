@@ -105,13 +105,22 @@ def regret(start_node, k=1):
 
 
 def delta_swap(new_point, distance, old_point, neighbors, neighbors2=None):
+    if neighbors2 is None:
+        neighbors2 = []
+        
     new_dist = 0
     old_dist = 0
-    if neighbors2 is not None:
-        new_dist += adjacency_matrix[old_point][neighbors2[0]] + adjacency_matrix[old_point][neighbors2[1]]
-        old_dist += adjacency_matrix[new_point][neighbors2[1]] + adjacency_matrix[new_point][neighbors2[0]]
-    new_dist += adjacency_matrix[new_point][neighbors[1]] + adjacency_matrix[new_point][neighbors[0]]
-    old_dist += adjacency_matrix[old_point][neighbors[0]] + adjacency_matrix[old_point][neighbors[1]]
+
+    for p in neighbors2:
+        if p not in (old_point, new_point):
+            new_dist += adjacency_matrix[old_point][p]
+            old_dist += adjacency_matrix[new_point][p]
+
+    for p in neighbors:
+        if p not in (old_point, new_point):
+            new_dist += adjacency_matrix[new_point][p]
+            old_dist += adjacency_matrix[old_point][p]
+
     if new_dist < old_dist:
         return distance - old_dist + new_dist
     return distance
