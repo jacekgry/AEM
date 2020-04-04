@@ -127,60 +127,10 @@ def delta_of_swap(vertex1, vertex2, neighbors1, neighbors2=None):
     return - old_dist + new_dist
 
 
-def find_first_better_swap_external(rest_points, neighbors, point, index, distance):
-    for index2, z in enumerate(rest_points):
-        new_dist = delta_of_swap(z, distance, point, neighbors)
-        if new_dist != distance:
-            start_solution[index] = z
-            rest_points[index2] = point
-            return rest_points, start_solution, new_dist
-    return rest_points, start_solution, distance
-
-
-def find_best_swap_external(rest_points, neighbors, index, distance):
-    for index2 in range(len(rest_points)):
-        new_dist = delta_of_swap(rest_points[index2], distance, start_solution[index], neighbors)
-        if new_dist != distance:
-            temp = start_solution[index]
-            start_solution[index] = rest_points[index2]
-            rest_points[index2] = temp
-            distance = new_dist
-    return rest_points, start_solution, distance
-
-
-def delta_edges(neighbors, start, end, distance):
+def delta_edges(neighbors, start, end):
     new_dist = adjacency_matrix[start][neighbors[1]] + adjacency_matrix[end][neighbors[0]]
     old_dist = adjacency_matrix[start][neighbors[0]] + adjacency_matrix[end][neighbors[1]]
-    if new_dist < old_dist:
-        return distance - old_dist + new_dist
-    return distance
-
-
-def find_first_better_edges(solution, index, distance):
-    for i in range(index + 1, cycle_size - 1):
-        neighbors = [solution[(index - 1) % cycle_size], solution[(i + 1) % cycle_size]]
-        new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
-        if new_dist != distance:
-            distance = new_dist
-            if (i + 1) % cycle_size == 0:
-                solution[index::] = solution[index::][::-1]
-            else:
-                solution[index:(i + 1) % cycle_size] = solution[index:(i + 1) % cycle_size][::-1]
-            return solution, distance
-    return solution, distance
-
-
-def find_best_edges(solution, index, distance):
-    for i in range(index + 1, cycle_size - 1):
-        neighbors = [solution[(index - 1) % cycle_size], solution[(i + 1) % cycle_size]]
-        new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
-        if new_dist != distance:
-            distance = new_dist
-            if (i + 1) % cycle_size == 0:
-                solution[index::] = solution[index::][::-1]
-            else:
-                solution[index:i + 1] = solution[index:i + 1][::-1]
-    return solution, distance
+    return new_dist - old_dist
 
 
 # wewnatrz - wierzcholki
@@ -262,27 +212,85 @@ def steepest_local_search_vertices(start_sol, unused_vertices, start_dist):
     return current_sol, current_dist
 
 
-# wewnatrz - krawedzie
-def greedy_local_search_edges(start_solution, rest_points, distance):
-    choice = np.random.choice(2, cycle_size, replace=True)
-    for index in range(cycle_size):
-        neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
-        if choice[index] == 0:
-            rest_points, start_solution, distance = find_first_better_swap_external(rest_points, neighbors,
-                                                                                    start_solution[index], index,
-                                                                                    distance)
-        else:
-            start_solution, distance = find_first_better_edges(start_solution, index, distance)
-    return start_solution, distance
+def greedy_local_search_edges(start_sol, unused_vertices, start_dist):
+    n = len(start_sol)
+    no_of_neighs = int(n ** 2 + n * (n - 3) / 2)
+    external_neighs_indexes = np.random.choice(no_of_neighs, n ** 2, replace=False)
+    choices = np.zeros(no_of_neighs)
+    choices[external_neighs_indexes] = 1
+
+    best_sol, best_distance = start_sol.copy(), start_dist
+    current_unused_vertices = unused_vertices.copy()
+    current_sol = start_sol.copy()
+    current_dist = start_dist
+    improved = True
+
+    while improved:
+        int_neighs = iter([(i, j) for i in range(cycle_size) for j in range(i + 1, cycle_size - 1)])
+        ext_neighs = itertools.product(range(cycle_size), enumerate(current_unused_vertices))
+        improved = False
+        for neigh_no in range(no_of_neighs):
+            if choices[neigh_no] == 0:
+                index, idx_of_int = int_neighs.__next__()
+                neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(idx_of_int + 1) % cycle_size]]
+                delta = delta_edges(neighbors, current_sol[index], current_sol[idx_of_int])
+                if current_dist + delta < best_distance:
+                    if (idx_of_int + 1) % cycle_size == 0:
+                        best_sol[index::] = best_sol[index::][::-1]
+                    else:
+                        best_sol[index:(idx_of_int + 1) % cycle_size] = best_sol[index:(idx_of_int + 1) % cycle_size][::-1]
+                    best_distance = current_dist + delta
+                    improved = True
+                    break
+
+            else:
+                index, (ext_idx, ext_vertex) = ext_neighs.__next__()
+                neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
+                delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+                if current_dist + delta < best_distance:
+                    best_sol = current_sol.copy()
+                    best_sol[index] = ext_vertex
+                    best_distance = current_dist + delta
+                    improved = True
+                    break
+        current_sol, current_dist = best_sol.copy(), best_distance
+        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+    return current_sol, current_dist
 
 
-# wewnatrz - krawedzie
-def steepest_local_search_edges(start_solution, rest_points, distance):
-    for index in range(cycle_size):
-        neighbors = [start_solution[(index - 1) % cycle_size], start_solution[(index + 1) % cycle_size]]
-        rest_points, start_solution, distance = find_best_swap_external(rest_points, neighbors, index, distance)
-        start_solution, distance = find_best_edges(start_solution, index, distance)
-    return start_solution, distance
+def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
+    best_sol, best_distance = start_sol.copy(), start_dist
+    current_unused_vertices = unused_vertices.copy()
+    improved = True
+    current_sol = start_sol.copy()
+    current_dist = start_dist
+    while improved:
+        improved = False
+        for index in range(cycle_size):
+            for i in range(index + 1, cycle_size - 1):
+                neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
+                delta = delta_edges(neighbors, current_sol[index], current_sol[i])
+                if current_dist + delta < best_distance:
+                    best_sol = current_sol.copy()
+                    if (i + 1) % cycle_size == 0:
+                        best_sol[index::] = best_sol[index::][::-1]
+                    else:
+                        best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
+                    best_distance = current_dist + delta
+                    improved = True
+
+
+            for ext_idx, ext_vertex in enumerate(current_unused_vertices):
+                neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
+                delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+                if current_dist + delta < best_distance:
+                    best_sol = current_sol.copy()
+                    best_sol[index] = ext_vertex
+                    best_distance = current_dist + delta
+                    improved = True
+        current_sol, current_dist = best_sol.copy(), best_distance
+        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+    return current_sol, current_dist
 
 
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
@@ -303,9 +311,9 @@ for _ in range(100):
     start_distances.append(start_distance)
     for method in (
             steepest_local_search_vertices,
-            # steepest_local_search_edges,
+            steepest_local_search_edges,
             greedy_local_search_vertices,
-            # greedy_local_search_edges,
+            greedy_local_search_edges,
     ):
         s, r = start_solution.copy(), rest_points.copy()
         start_time = time.time()
@@ -318,9 +326,9 @@ for _ in range(100):
 
 for method in (
         steepest_local_search_vertices,
-        # steepest_local_search_edges,
+        steepest_local_search_edges,
         greedy_local_search_vertices,
-        # greedy_local_search_edges,
+        greedy_local_search_edges,
 ):
     print(method.__name__)
 
