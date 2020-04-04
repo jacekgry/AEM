@@ -185,7 +185,7 @@ def delta_edges(neighbors, start, end, distance):
 
 
 def find_first_better_edges(solution, index, distance):
-    for i in range(index+1, cycle_size-1):
+    for i in range(index + 1, cycle_size - 1):
         neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
         new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
         if new_dist != distance:
@@ -199,7 +199,7 @@ def find_first_better_edges(solution, index, distance):
 
 
 def find_best_edges(solution, index, distance):
-    for i in range(index+1, cycle_size-1):
+    for i in range(index + 1, cycle_size - 1):
         neighbors = [solution[(index-1) % cycle_size], solution[(i+1) % cycle_size]]
         new_dist = delta_edges(neighbors, solution[index], solution[i], distance)
         if new_dist != distance:
