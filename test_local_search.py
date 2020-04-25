@@ -7,17 +7,15 @@ import numpy as np
 
 from aem import steepest_local_search_edges, steepest_local_search_vertices, \
     greedy_local_search_edges, greedy_local_search_vertices, get_path_length, adjacency_matrix, cycle_size, problem, \
-    instance_name, save_graph
+    instance_name, save_graph, steepest_local_search_edges_with_ordered_move_list
 
-no_of_tests = 100
+no_of_tests = 1
 results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
 start_distances = []
-methods = [steepest_local_search_vertices,
-           steepest_local_search_edges,
-           greedy_local_search_vertices,
-           greedy_local_search_edges]
+methods = [steepest_local_search_vertices, steepest_local_search_edges_with_ordered_move_list]
+
 
 for i in range(no_of_tests):
     start_solution = random.sample(range(len(problem.node_coords)), cycle_size)

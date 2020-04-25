@@ -1,0 +1,8 @@
+,steepest_local_search_vertices,steepest_local_search_edges_with_ordered_move_list
+AVG,18245.0,23808.0
+MIN,18245,23808
+MAX,18245,23808
+AVG TIME,0.8229629993438721,3.4699318408966064
+
+i,,,,,start_dist
+0,18245,23808,79640
