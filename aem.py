@@ -341,6 +341,43 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                 break
             else:
                 move_list.remove(move)
+
+        if improved:
+            indexes = []
+            if old_move_list[-1][2]:
+                index = current_sol.index(old_move_list[-1][1][1])
+                indexes += [(index - 1) % cycle_size, index, (index + 1) % cycle_size]
+            else:
+                index = current_sol.index(old_move_list[-1][1][0])
+                indexes += [(index - 1) % cycle_size, index, (index + 1) % cycle_size]
+            for index in indexes:
+                for i in range(index + 1, cycle_size - 1):
+                    flag = True
+                    neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
+                    delta = delta_edges(neighbors, current_sol[index], current_sol[i])
+                    move = [delta, [current_sol[index], current_sol[i]], 0]
+                    for update_index, q in enumerate(move_list):
+                        if q[1] == move[1]:
+                            flag = False
+                            move_list[update_index] = move
+                        break
+                    if flag and delta < 0:
+                        # internal
+                        move_list.append(move)
+
+                for ext_idx, ext_vertex in enumerate(current_unused_vertices):
+                    flag = True
+                    neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
+                    delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+                    move = [delta, [current_sol[index], ext_vertex], 1]
+                    for update_index, q in enumerate(move_list):
+                        if q[1] == move[1]:
+                            move_list[update_index] = move
+                            flag = False
+                        break
+                    if flag and delta < 0:
+                        # external
+                        move_list.append(move)
         current_unused_vertices = [x for x in range(100) if x not in current_sol]
     return current_sol, current_dist
 
