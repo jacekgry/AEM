@@ -294,43 +294,46 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
     current_dist = start_dist
     move_list = []
     old_move_list = []
+
+    for index in range(cycle_size):
+        for i in range(index + 1, cycle_size - 1):
+            neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
+            delta = delta_edges(neighbors, current_sol[index], current_sol[i])
+            if delta < 0:
+                # internal
+                move = [delta, [current_sol[index], current_sol[i]], 0]
+                if move not in move_list and move not in old_move_list:
+                    move_list.append(move)
+
+        for ext_idx, ext_vertex in enumerate(current_unused_vertices):
+            neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
+            delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+            if delta < 0:
+                # external
+                move = [delta, [current_sol[index], ext_vertex], 1]
+                if move not in move_list and move not in old_move_list:
+                    move_list.append(move)
+
     while improved:
         improved = False
-        for index in range(cycle_size):
-            for i in range(index + 1, cycle_size - 1):
-                neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
-                delta = delta_edges(neighbors, current_sol[index], current_sol[i])
-                if delta < 0:
-                    #internal
-                    move = [delta, [index, i], 0]
-                    if move not in move_list and move not in old_move_list:
-                        move_list.append(move)
-
-            for ext_idx, ext_vertex in enumerate(current_unused_vertices):
-                neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
-                delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
-                if delta < 0:
-                    #external
-                    move = [delta, [index, ext_vertex], 1]
-                    if move not in move_list and move not in old_move_list:
-                        move_list.append(move)
 
         move_list = sorted(move_list, key=lambda move: move[0])
+
         for move in move_list:
             internal = move[1][0]
             second_point = move[1][1]
             if move[2] and internal in current_sol and second_point not in current_sol:
-                current_sol[internal] = second_point
+                current_sol[current_sol.index(internal)] = second_point
                 current_dist += move[0]
                 old_move_list.append(move)
                 move_list.remove(move)
                 improved = True
                 break
             elif move[2] == 0 and internal in current_sol and second_point in current_sol:
-                if (second_point + 1) % cycle_size == 0:
-                    current_sol[internal::] = current_sol[internal::][::-1]
+                if (current_sol.index(second_point) + 1) % cycle_size == 0:
+                    current_sol[current_sol.index(internal)::] = current_sol[current_sol.index(internal)::][::-1]
                 else:
-                    current_sol[internal:second_point + 1] = current_sol[internal:second_point + 1][::-1]
+                    current_sol[current_sol.index(internal):current_sol.index(second_point) + 1] = current_sol[current_sol.index(internal):current_sol.index(second_point) + 1][::-1]
                 current_dist += move[0]
                 old_move_list.append(move)
                 move_list.remove(move)
