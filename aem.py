@@ -405,8 +405,8 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
         improved = False
         for index in range(cycle_size):
             for vert in nearest_vertices[current_sol[index]]:
-                if vert in current_sol and current_sol.index(vert) > index and current_sol[-1] != vert and current_sol[
-                    0] != current_sol[index]:
+                if vert in current_sol and current_sol.index(vert) > index and (current_sol[-1] != vert or current_sol[
+                    0] != current_sol[index]):
                     i = current_sol.index(vert)
                     neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
                     delta = delta_edges(neighbors, current_sol[index], current_sol[i])
@@ -417,17 +417,15 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
                         else:
                             best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
                         best_distance = current_dist + delta
-                        best_move = [delta, current_sol[index], current_sol[i], 0]
                         improved = True
 
-            for ext_vertex in nearest_vertices[current_sol[index]]:
-                if ext_vertex in current_unused_vertices:
+            # for ext_vertex in nearest_vertices[current_sol[index]]:
+                elif vert in current_unused_vertices:
                     neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
-                    delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+                    delta = delta_of_swap(current_sol[index], vert, neighbors1)
                     if current_dist + delta < best_distance:
-                        best_move = [delta, current_sol[index], ext_vertex, 1]
                         best_sol = current_sol.copy()
-                        best_sol[index] = ext_vertex
+                        best_sol[index] = vert
                         best_distance = current_dist + delta
                         improved = True
         current_sol, current_dist = best_sol.copy(), best_distance

@@ -10,7 +10,7 @@ from aem import steepest_local_search_edges, steepest_local_search_vertices, \
     instance_name, save_graph, steepest_local_search_edges_with_ordered_move_list, \
     steepest_local_search_edges_with_candidate_moves, no_of_nodes
 
-no_of_tests = 20
+no_of_tests = 3
 results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
