@@ -8,9 +8,9 @@ import numpy as np
 from aem import steepest_local_search_edges, steepest_local_search_vertices, \
     greedy_local_search_edges, greedy_local_search_vertices, get_path_length, adjacency_matrix, cycle_size, problem, \
     instance_name, save_graph, steepest_local_search_edges_with_ordered_move_list, \
-    steepest_local_search_edges_with_candidate_moves
+    steepest_local_search_edges_with_candidate_moves, no_of_nodes
 
-no_of_tests = 5
+no_of_tests = 20
 results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
@@ -21,7 +21,7 @@ methods = [steepest_local_search_edges, steepest_local_search_edges_with_ordered
 for i in range(no_of_tests):
     start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
     # start_solution = greedy_cycle(i)
-    rest_points = [x for x in range(100) if x not in start_solution]
+    rest_points = [x for x in range(no_of_nodes) if x not in start_solution]
     start_distance = get_path_length(adjacency_matrix, start_solution)
     start_distances.append(start_distance)
     for method in methods:
