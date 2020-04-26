@@ -13,11 +13,8 @@ def euclidean_distance(node1, node2):
 
 def get_nearest_vertices():
     result = []
-    for i in adjacency_matrix:
-        distances = sorted(i)[1:6]
-        temp = []
-        for distance in distances:
-            temp.append(np.where(i == distance)[0][0] + 1)
+    for row in adjacency_matrix:
+        temp = np.argsort(row)[1:6]
         result.append(temp)
     return result
 
@@ -180,7 +177,7 @@ def greedy_local_search_vertices(start_sol, unused_vertices, start_dist):
                     improved = True
                     break
         current_sol, current_dist = best_sol.copy(), best_distance
-        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+        current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
 
 
@@ -213,7 +210,7 @@ def steepest_local_search_vertices(start_sol, unused_vertices, start_dist):
                     improved = True
 
         current_sol, current_dist = best_sol.copy(), best_distance
-        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+        current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
 
 
@@ -260,7 +257,7 @@ def greedy_local_search_edges(start_sol, unused_vertices, start_dist):
                     improved = True
                     break
         current_sol, current_dist = best_sol.copy(), best_distance
-        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+        current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
 
 
@@ -298,7 +295,7 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
                     improved = True
         move.append(best_move)
         current_sol, current_dist = best_sol.copy(), best_distance
-        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+        current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     print(move)
     return current_sol, current_dist
 
@@ -389,7 +386,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                         # external
                         move_list.append([delta, move, 1])
             print(best_move)
-            current_unused_vertices = [x for x in range(100) if x not in current_sol]
+            current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
             vert.clear()
     return current_sol, get_path_length(adjacency_matrix, current_sol)
 
@@ -403,7 +400,7 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
     while improved:
         improved = False
         for index in range(cycle_size):
-            for vert in nearest_vertices[current_sol[index]-1]:
+            for vert in nearest_vertices[current_sol[index]]:
                 if vert in current_sol and current_sol.index(vert) > index and current_sol[-1] != vert and current_sol[0] != current_sol[index]:
                     i = current_sol.index(vert)
                     neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
@@ -430,13 +427,14 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
         print(best_move)
         print(current_sol)
         current_sol, current_dist = best_sol.copy(), best_distance
-        current_unused_vertices = [x for x in range(100) if x not in current_sol]
+        current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
 
 
-instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA100'
+instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA200'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
-# cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
+cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
 cycle_size = 30
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
+no_of_nodes = len(adjacency_matrix)
 nearest_vertices = get_nearest_vertices()
