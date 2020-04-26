@@ -296,7 +296,6 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
         move.append(best_move)
         current_sol, current_dist = best_sol.copy(), best_distance
         current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
-    print(move)
     return current_sol, current_dist
 
 
@@ -389,10 +388,9 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                     if delta < 0:
                         # external
                         move_list.append([delta, move, 1])
-            print(best_move)
             current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
             vert.clear()
-    return current_sol, get_path_length(adjacency_matrix, current_sol)
+    return current_sol, current_dist
 
 
 def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices, start_dist):
@@ -419,7 +417,6 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
                         best_distance = current_dist + delta
                         improved = True
 
-            # for ext_vertex in nearest_vertices[current_sol[index]]:
                 elif vert in current_unused_vertices:
                     neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
                     delta = delta_of_swap(current_sol[index], vert, neighbors1)

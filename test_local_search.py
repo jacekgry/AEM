@@ -25,13 +25,18 @@ for i in range(no_of_tests):
     start_distance = get_path_length(adjacency_matrix, start_solution)
     start_distances.append(start_distance)
     for method in methods:
+        print(method.__name__)
         s, r = start_solution.copy(), rest_points.copy()
         start_time = time.time()
         solution, dist = method(s, r, start_distance)
+        print('cycle size: ', dist)
         duration = time.time() - start_time
+        print('duration: ', duration)
         results[method.__name__].append(dist)
         times[method.__name__].append(duration)
         actual_distances[method.__name__].append(get_path_length(adjacency_matrix, solution))
+        print('actual size: ', get_path_length(adjacency_matrix, solution))
+
         # save_graph(problem.node_coords, solution, f'{method.__name__}_{i}')
 
 results_file = open(f'results_ls_{instance_name}.csv', 'w')
