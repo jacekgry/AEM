@@ -257,6 +257,7 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
     best_sol, best_distance = start_sol.copy(), start_dist
     current_unused_vertices = unused_vertices.copy()
     improved = True
+    move = []
     current_sol = start_sol.copy()
     current_dist = start_dist
     while improved:
@@ -271,6 +272,7 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
                         best_sol[index::] = best_sol[index::][::-1]
                     else:
                         best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
+                    best_move = [current_sol[index], current_sol[i], 0]
                     best_distance = current_dist + delta
                     improved = True
 
@@ -278,12 +280,15 @@ def steepest_local_search_edges(start_sol, unused_vertices, start_dist):
                 neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
                 delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
                 if current_dist + delta < best_distance:
+                    best_move = [current_sol[index], ext_vertex, 1]
                     best_sol = current_sol.copy()
                     best_sol[index] = ext_vertex
                     best_distance = current_dist + delta
                     improved = True
+        move.append(best_move)
         current_sol, current_dist = best_sol.copy(), best_distance
         current_unused_vertices = [x for x in range(100) if x not in current_sol]
+    print(move)
     return current_sol, current_dist
 
 
@@ -302,8 +307,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
             if delta < 0:
                 # internal
                 move = [delta, [current_sol[index], current_sol[i]], 0]
-                if move not in move_list and move not in old_move_list:
-                    move_list.append(move)
+                move_list.append(move)
 
         for ext_idx, ext_vertex in enumerate(current_unused_vertices):
             neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
@@ -311,8 +315,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
             if delta < 0:
                 # external
                 move = [delta, [current_sol[index], ext_vertex], 1]
-                if move not in move_list and move not in old_move_list:
-                    move_list.append(move)
+                move_list.append(move)
 
     while improved:
         improved = False
@@ -325,7 +328,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
             if move[2] and internal in current_sol and second_point not in current_sol:
                 current_sol[current_sol.index(internal)] = second_point
                 current_dist += move[0]
-                old_move_list.append(move)
+                old_move_list.append([move[1], move[2]])
                 move_list.remove(move)
                 improved = True
                 break
@@ -335,7 +338,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                 else:
                     current_sol[current_sol.index(internal):current_sol.index(second_point) + 1] = current_sol[current_sol.index(internal):current_sol.index(second_point) + 1][::-1]
                 current_dist += move[0]
-                old_move_list.append(move)
+                old_move_list.append([move[1], move[2]])
                 move_list.remove(move)
                 improved = True
                 break
@@ -344,20 +347,20 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
 
         if improved:
             indexes = []
-            index = current_sol.index(old_move_list[-1][1][1])
+            index = current_sol.index(old_move_list[-1][0][1])
             indexes += [(index - 1) % cycle_size, index, (index + 1) % cycle_size]
-            if old_move_list[-1][2] == 0:
-                index = current_sol.index(old_move_list[-1][1][0])
+            if old_move_list[-1][1] == 0:
+                index = current_sol.index(old_move_list[-1][0][0])
                 indexes += [(index - 1) % cycle_size, index, (index + 1) % cycle_size]
             for index in indexes:
-                for i in range(cycle_size - 1):
+                for i in range(cycle_size):
                     if i != index:
                         flag = True
                         neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
                         delta = delta_edges(neighbors, current_sol[index], current_sol[i])
                         move = [current_sol[index], current_sol[i]]
                         for update_index, q in enumerate(move_list):
-                            if (q[1] == move or q[1][::-1] == move) and q[2] == 0:
+                            if (q[1] == move or q[1][::-1] == move) and q[2] == 0 and [move, 0] not in old_move_list:
                                 flag = False
                                 move_list[update_index][0] = delta
                                 break
@@ -371,7 +374,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                     delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
                     move = [current_sol[index], ext_vertex]
                     for update_index, q in enumerate(move_list):
-                        if q[1] == move and q[2] == 1:
+                        if q[1] == move and q[2] == 1 and [move, 1] not in old_move_list:
                             move_list[update_index][0] = delta
                             flag = False
                             break
@@ -384,5 +387,6 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
 
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA100'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
-cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
+# cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
+cycle_size = 5
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)

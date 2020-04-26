@@ -14,7 +14,7 @@ results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
 start_distances = []
-methods = [steepest_local_search_vertices, steepest_local_search_edges_with_ordered_move_list]
+methods = [steepest_local_search_edges, steepest_local_search_edges_with_ordered_move_list]
 
 
 for i in range(no_of_tests):
