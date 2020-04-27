@@ -322,19 +322,18 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                 # external
                 move = [delta, [current_sol[index], ext_vertex], 1]
                 move_list.append(move)
+    best_move = None
 
     while improved:
         improved = False
 
         move_list = sorted(move_list, key=lambda move: move[0])
-        best_move = None
         new_move_list = move_list.copy()
         for move in move_list:
             internal = move[1][0]
             second_point = move[1][1]
             if move[2] and internal in current_sol and second_point not in current_sol:
                 current_sol[current_sol.index(internal)] = second_point
-                current_dist += move[0]
                 improved = True
                 best_move = move
                 break
@@ -347,14 +346,15 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                                                                                                        internal):current_sol.index(
                                                                                                        second_point) + 1][
                                                                                                    ::-1]
-                current_dist += move[0]
                 improved = True
                 best_move = move
                 break
             else:
                 new_move_list.remove(move)
-        move_list = new_move_list
+        # print(current_sol)
+        # print(best_move)
         if improved:
+            current_dist += best_move[0]
             indexes = []
             index = current_sol.index(best_move[1][1])
             indexes += [(index - 1) % cycle_size, index, (index + 1) % cycle_size]
@@ -390,7 +390,7 @@ def steepest_local_search_edges_with_ordered_move_list(start_sol, unused_vertice
                         move_list.append([delta, move, 1])
             current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
             vert.clear()
-    return current_sol, current_dist
+    return current_sol, get_path_length(adjacency_matrix, current_sol)
 
 
 def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices, start_dist):
@@ -401,6 +401,7 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
     current_dist = start_dist
     while improved:
         improved = False
+        best_move = None
         for index in range(cycle_size):
             for vert in nearest_vertices[current_sol[index]]:
                 if vert in current_sol and current_sol.index(vert) > index and (current_sol[-1] != vert or current_sol[
@@ -416,21 +417,28 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
                             best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
                         best_distance = current_dist + delta
                         improved = True
+                        best_move = [delta, current_sol[index], vert, 0]
 
-                elif vert in current_unused_vertices:
-                    neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
-                    delta = delta_of_swap(current_sol[index], vert, neighbors1)
-                    if current_dist + delta < best_distance:
-                        best_sol = current_sol.copy()
-                        best_sol[index] = vert
-                        best_distance = current_dist + delta
-                        improved = True
+            for ext_idx, ext_vertex in enumerate(current_unused_vertices):
+
+                neighbors1 = [current_sol[(index - 1) % cycle_size], current_sol[(index + 1) % cycle_size]]
+
+                delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
+
+                if current_dist + delta < best_distance:
+                    best_move = [delta, current_sol[index], ext_vertex, 1]
+                    best_sol = current_sol.copy()
+                    best_sol[index] = ext_vertex
+                    best_distance = current_dist + delta
+                    improved = True
+                    best_move = [delta, current_sol[index], ext_vertex, 1]
+
         current_sol, current_dist = best_sol.copy(), best_distance
         current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
 
 
-instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroA200'
+instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
 # cycle_size = 30
