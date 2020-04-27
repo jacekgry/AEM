@@ -403,7 +403,8 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
         improved = False
         best_move = None
         for index in range(cycle_size):
-            for vert in nearest_vertices[current_sol[index]]:
+            # for vert in nearest_vertices[current_sol[index]]:
+            for vert in np.argsort(adjacency_matrix[current_sol[index]])[1:6]:
                 if vert in current_sol and current_sol.index(vert) > index and (current_sol[-1] != vert or current_sol[
                     0] != current_sol[index]):
                     i = current_sol.index(vert)
@@ -441,7 +442,7 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
-# cycle_size = 30
+cycle_size = 30
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 no_of_nodes = len(adjacency_matrix)
 nearest_vertices = get_nearest_vertices()
