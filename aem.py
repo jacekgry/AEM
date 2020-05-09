@@ -2,6 +2,7 @@ import itertools
 import operator
 import sys
 import random
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -406,7 +407,7 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
             for vert in nearest_vertices[current_sol[index]]:
                 if vert in current_sol:
                     i = current_sol.index(vert)
-                    if i > index and i!= cycle_size-1:
+                    if i > index and i != cycle_size - 1:
                         neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
                         delta = delta_edges(neighbors, current_sol[index], current_sol[i])
                         if current_dist + delta < best_distance:
@@ -435,7 +436,7 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
     return current_sol, current_dist
 
 
-def MSLS(start_sol, unused_vertices, start_dist):
+def MSLS():
     result = []
     for i in range(100):
         new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
@@ -445,6 +446,37 @@ def MSLS(start_sol, unused_vertices, start_dist):
         result.append([get_path_length(adjacency_matrix, new_solution), new_solution])
     best_sol = sorted(result, key=lambda x: x[0])[0]
     return best_sol[1], best_sol[0]
+
+
+def ILS1(avg_mlsl_time, no_of_random_swaps=5):
+    start_time = time.time()
+    new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
+    rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
+    start_distance = get_path_length(adjacency_matrix, new_start_solution)
+    print("start distance: ", start_distance)
+    solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
+    while time.time() - start_time < avg_mlsl_time:
+        vertices_to_delete = random.sample(solution, no_of_random_swaps)
+        vertices_to_add = random.sample(rest_points, no_of_random_swaps)
+        change = 0
+        solution_after_perturbation = solution.copy()
+        rest_points_after_perturbation = rest_points.copy()
+        for vertex_to_delete, vertex_to_add in zip(vertices_to_delete, vertices_to_add):
+            idx_of_vertex_to_delete = solution_after_perturbation.index(vertex_to_delete)
+            neighbors1 = [solution_after_perturbation[(idx_of_vertex_to_delete - 1) % cycle_size],
+                          solution_after_perturbation[(idx_of_vertex_to_delete + 1) % cycle_size]]
+            change += delta_of_swap(vertex_to_delete, vertex_to_add, neighbors1)
+            solution_after_perturbation[idx_of_vertex_to_delete] = vertex_to_add
+            rest_points_after_perturbation.append(vertex_to_delete)
+            rest_points_after_perturbation.remove(vertex_to_add)
+
+        solution_after_ls, dist_after_ls = steepest_local_search_edges_with_ordered_move_list(solution_after_perturbation, rest_points_after_perturbation,
+                                                                                              dist + change)
+        if dist_after_ls < dist:
+            solution = solution_after_ls
+            dist = dist_after_ls
+            rest_points = [x for x in range(no_of_nodes) if x not in solution_after_ls]
+    return solution, dist
 
 
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
