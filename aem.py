@@ -1,6 +1,7 @@
 import itertools
 import operator
 import sys
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -401,24 +402,21 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
     current_dist = start_dist
     while improved:
         improved = False
-        best_move = None
         for index in range(cycle_size):
-            # for vert in nearest_vertices[current_sol[index]]:
-            for vert in np.argsort(adjacency_matrix[current_sol[index]])[1:6]:
-                if vert in current_sol and current_sol.index(vert) > index and (current_sol[-1] != vert or current_sol[
-                    0] != current_sol[index]):
+            for vert in nearest_vertices[current_sol[index]]:
+                if vert in current_sol:
                     i = current_sol.index(vert)
-                    neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
-                    delta = delta_edges(neighbors, current_sol[index], current_sol[i])
-                    if current_dist + delta < best_distance:
-                        best_sol = current_sol.copy()
-                        if (i + 1) % cycle_size == 0:
-                            best_sol[index::] = best_sol[index::][::-1]
-                        else:
-                            best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
-                        best_distance = current_dist + delta
-                        improved = True
-                        best_move = [delta, current_sol[index], vert, 0]
+                    if i > index and i!= cycle_size-1:
+                        neighbors = [current_sol[(index - 1) % cycle_size], current_sol[(i + 1) % cycle_size]]
+                        delta = delta_edges(neighbors, current_sol[index], current_sol[i])
+                        if current_dist + delta < best_distance:
+                            best_sol = current_sol.copy()
+                            if (i + 1) % cycle_size == 0:
+                                best_sol[index::] = best_sol[index::][::-1]
+                            else:
+                                best_sol[index:i + 1] = best_sol[index:i + 1][::-1]
+                            best_distance = current_dist + delta
+                            improved = True
 
             for ext_idx, ext_vertex in enumerate(current_unused_vertices):
 
@@ -427,16 +425,26 @@ def steepest_local_search_edges_with_candidate_moves(start_sol, unused_vertices,
                 delta = delta_of_swap(current_sol[index], ext_vertex, neighbors1)
 
                 if current_dist + delta < best_distance:
-                    best_move = [delta, current_sol[index], ext_vertex, 1]
                     best_sol = current_sol.copy()
                     best_sol[index] = ext_vertex
                     best_distance = current_dist + delta
                     improved = True
-                    best_move = [delta, current_sol[index], ext_vertex, 1]
 
         current_sol, current_dist = best_sol.copy(), best_distance
         current_unused_vertices = [x for x in range(no_of_nodes) if x not in current_sol]
     return current_sol, current_dist
+
+
+def MSLS(start_sol, unused_vertices, start_dist):
+    result = []
+    for i in range(100):
+        new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
+        rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
+        start_distance = get_path_length(adjacency_matrix, new_start_solution)
+        new_solution, new_dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
+        result.append([get_path_length(adjacency_matrix, new_solution), new_solution])
+    best_sol = sorted(result, key=lambda x: x[0])[0]
+    return best_sol[1], best_sol[0]
 
 
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
