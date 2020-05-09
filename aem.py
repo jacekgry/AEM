@@ -50,7 +50,8 @@ def find_combinations(matrix, order, node):
 
 def greedy_cycle_best_comb(matrix, order, node):
     comb = find_combinations(matrix, order, node)
-    return min(comb, key=operator.itemgetter(1))
+    result = min(comb, key=operator.itemgetter(1))
+    return result
 
 
 def save_graph(nodes, order, graph_filename):
@@ -98,13 +99,14 @@ def greedy_cycle(start_node):
 
 
 def greedy_cycle_with_partial_solution(partial_solution):
+    order_list = partial_solution
     for i in range(cycle_size - len(partial_solution)):
         temp = []
         for t in range(len(problem.node_coords)):
-            if t not in partial_solution:
-                temp.append(greedy_cycle_best_comb(adjacency_matrix, partial_solution, t))
+            if t not in order_list:
+                temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t))
         order_list, dist = min(temp, key=operator.itemgetter(1))
-    return partial_solution, dist
+    return order_list, dist
 
 
 def regret(start_node, k=1):
@@ -496,12 +498,10 @@ def ILS2(avg_mlsl_time, percentage_of_deleted_solution=0.2):
     start_distance = get_path_length(adjacency_matrix, new_start_solution)
     solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
     while time.time() - start_time < avg_mlsl_time:
-        first_vertex_idx_to_delete = random.randrange(0, cycle_size)
-        solution_after_perturbation = solution.copy()
-        to_be_deleted_from_beggining = min(0, int(percentage_of_deleted_solution * cycle_size) - (cycle_size - first_vertex_idx_to_delete))
-        solution_after_perturbation = solution_after_perturbation[:first_vertex_idx_to_delete]
-        solution_after_perturbation = solution_after_perturbation[to_be_deleted_from_beggining:]
-
+        first_vertex_idx_to_delete = random.randrange(0, cycle_size - int(percentage_of_deleted_solution * cycle_size))
+        to_be_deleted_from_beggining = first_vertex_idx_to_delete + int(percentage_of_deleted_solution * cycle_size)
+        solution_after_perturbation = solution[:first_vertex_idx_to_delete]
+        solution_after_perturbation += solution[to_be_deleted_from_beggining:]
         solution_after_greedy, dist_after_greedy = greedy_cycle_with_partial_solution(solution_after_perturbation)
         if dist_after_greedy < dist:
             solution = solution_after_greedy

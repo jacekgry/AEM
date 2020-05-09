@@ -36,7 +36,7 @@ for method in methods:
         actual_distances[method.__name__].append(get_path_length(adjacency_matrix, solution))
         print('actual size: ', get_path_length(adjacency_matrix, solution))
 
-        save_graph(problem.node_coords, solution, f'{method.__name__}_{i}')
+        # save_graph(problem.node_coords, solution, f'{method.__name__}_{i}')
 
 results_file = open(f'results_ls_{instance_name}.csv', 'w')
 sys.stdout = results_file
