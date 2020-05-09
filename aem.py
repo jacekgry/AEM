@@ -97,6 +97,16 @@ def greedy_cycle(start_node):
     return order_list
 
 
+def greedy_cycle_with_partial_solution(partial_solution):
+    for i in range(cycle_size - len(partial_solution)):
+        temp = []
+        for t in range(len(problem.node_coords)):
+            if t not in partial_solution:
+                temp.append(greedy_cycle_best_comb(adjacency_matrix, partial_solution, t))
+        order_list, dist = min(temp, key=operator.itemgetter(1))
+    return partial_solution, dist
+
+
 def regret(start_node, k=1):
     order_list = [start_node]
 
@@ -476,6 +486,27 @@ def ILS1(avg_mlsl_time, no_of_random_swaps=5):
             solution = solution_after_ls
             dist = dist_after_ls
             rest_points = [x for x in range(no_of_nodes) if x not in solution_after_ls]
+    return solution, dist
+
+
+def ILS2(avg_mlsl_time, percentage_of_deleted_solution=0.2):
+    start_time = time.time()
+    new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
+    rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
+    start_distance = get_path_length(adjacency_matrix, new_start_solution)
+    solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
+    while time.time() - start_time < avg_mlsl_time:
+        first_vertex_idx_to_delete = random.randrange(0, cycle_size)
+        solution_after_perturbation = solution.copy()
+        to_be_deleted_from_beggining = min(0, int(percentage_of_deleted_solution * cycle_size) - (cycle_size - first_vertex_idx_to_delete))
+        solution_after_perturbation = solution_after_perturbation[:first_vertex_idx_to_delete]
+        solution_after_perturbation = solution_after_perturbation[to_be_deleted_from_beggining:]
+
+        solution_after_greedy, dist_after_greedy = greedy_cycle_with_partial_solution(solution_after_perturbation)
+        if dist_after_greedy < dist:
+            solution = solution_after_greedy
+            dist = dist_after_greedy
+
     return solution, dist
 
 

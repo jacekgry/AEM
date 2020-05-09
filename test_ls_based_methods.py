@@ -5,14 +5,14 @@ from collections import defaultdict
 import numpy as np
 
 from aem import get_path_length, adjacency_matrix, problem, \
-    instance_name, save_graph, MSLS, ILS1
+    instance_name, save_graph, MSLS, ILS1, ILS2, cycle_size
 
 no_of_tests = 2
 results = defaultdict(list)
 times = defaultdict(list)
 actual_distances = defaultdict(list)
 start_distances = []
-methods = [MSLS, ILS1]
+methods = [MSLS, ILS1, ILS2]
 
 for method in methods:
     for i in range(no_of_tests):
@@ -21,12 +21,14 @@ for method in methods:
 
         if method.__name__ == 'MSLS':
             solution, dist = method()
-        elif method.__name__ == 'ILS1':
+        else:
             solution, dist = method(np.mean(times['MSLS']))
-        elif method.__name__ == 'ILS2':
-            pass
 
         print('cycle size: ', dist)
+
+        assert len(solution) == cycle_size
+        assert len(set(solution)) == len(solution)
+
         duration = time.time() - start_time
         print('duration: ', duration)
         results[method.__name__].append(dist)
