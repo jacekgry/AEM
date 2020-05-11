@@ -461,6 +461,7 @@ def MSLS():
 
 
 def ILS1(avg_mlsl_time, no_of_random_swaps=5):
+    no_of_ls = 1
     start_time = time.time()
     new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
     rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
@@ -468,6 +469,7 @@ def ILS1(avg_mlsl_time, no_of_random_swaps=5):
     print("start distance: ", start_distance)
     solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
     while time.time() - start_time < avg_mlsl_time:
+        no_of_ls += 1
         vertices_to_delete = random.sample(solution, no_of_random_swaps)
         vertices_to_add = random.sample(rest_points, no_of_random_swaps)
         change = 0
@@ -488,32 +490,42 @@ def ILS1(avg_mlsl_time, no_of_random_swaps=5):
             solution = solution_after_ls
             dist = dist_after_ls
             rest_points = [x for x in range(no_of_nodes) if x not in solution_after_ls]
-    return solution, dist
+    return solution, dist, no_of_ls
 
 
 def ILS2(avg_mlsl_time, percentage_of_deleted_solution=0.2):
+    no_of_ls = 1
     start_time = time.time()
     new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
     rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
     start_distance = get_path_length(adjacency_matrix, new_start_solution)
     solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
     while time.time() - start_time < avg_mlsl_time:
+        no_of_ls += 1
         first_vertex_idx_to_delete = random.randrange(0, cycle_size - int(percentage_of_deleted_solution * cycle_size))
         to_be_deleted_from_beggining = first_vertex_idx_to_delete + int(percentage_of_deleted_solution * cycle_size)
         solution_after_perturbation = solution[:first_vertex_idx_to_delete]
         solution_after_perturbation += solution[to_be_deleted_from_beggining:]
+        time_of_greedy = time.time()
         solution_after_greedy, dist_after_greedy = greedy_cycle_with_partial_solution(solution_after_perturbation)
-        if dist_after_greedy < dist:
-            solution = solution_after_greedy
-            dist = dist_after_greedy
+        print("time of greedy: ", str(time.time()-time_of_greedy))
+        time_of_ls = time.time()
+        solution_after_ls, dist_after_ls = steepest_local_search_edges_with_ordered_move_list(solution_after_greedy,
+                                                                                              [x for x in range(no_of_nodes) if x not in solution_after_greedy],
+                                                                                              dist_after_greedy)
+        print("time of ls: ", str(time.time()-time_of_ls))
 
-    return solution, dist
+        if dist_after_ls < dist:
+            solution = solution_after_ls
+            dist = dist_after_ls
+
+    return solution, dist, no_of_ls
 
 
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
-cycle_size = 30
+# cycle_size = 30
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 no_of_nodes = len(adjacency_matrix)
 nearest_vertices = get_nearest_vertices()
