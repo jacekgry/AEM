@@ -24,7 +24,7 @@ for method in methods:
             solution, dist = method()
         else:
             # solution, dist = method(np.mean(times['MSLS']))
-            solution, dist, ls = method(10.5)
+            solution, dist, ls = method(294.5)
             no_of_ls[method.__name__].append(ls)
             print('no of ls: ', ls)
 
@@ -51,9 +51,9 @@ print(f"MIN,{','.join(map(lambda x: str(np.min(results[x.__name__])), methods))}
 print(f"MAX,{','.join(map(lambda x: str(np.max(results[x.__name__])), methods))}")
 print(f"AVG TIME,{','.join(map(lambda x: str(np.mean(times[x.__name__])), methods))}")
 print()
-print(f"AVG NO OF LS,{','.join(map(lambda x: str(np.mean(no_of_ls[x.__name__])), [ILS1, ILS2]))}")
-print(f"MIN NO OF LS,{','.join(map(lambda x: str(np.min(no_of_ls[x.__name__])), [ILS1, ILS2]))}")
-print(f"MAX NO OF LS,{','.join(map(lambda x: str(np.max(no_of_ls[x.__name__])), [ILS1, ILS2]))}")
+print(f"AVG NO OF LS,{','.join(map(lambda x: str(np.mean(no_of_ls[x.__name__])), [ILS2]))}")
+print(f"MIN NO OF LS,{','.join(map(lambda x: str(np.min(no_of_ls[x.__name__])), [ILS2]))}")
+print(f"MAX NO OF LS,{','.join(map(lambda x: str(np.max(no_of_ls[x.__name__])), [ILS2]))}")
 
 print()
 print('i,,,,,start_dist')

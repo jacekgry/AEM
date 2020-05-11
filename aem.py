@@ -42,11 +42,10 @@ def find_combinations(matrix, order, node, prev_value):
     comb = []
     for z in range(1, len(order) + 1):
         combination = order[:]
-        value = prev_value - adjacency_matrix[combination[z - 1]][combination[z % cycle_size]]
+        value = prev_value - adjacency_matrix[combination[z - 1]][combination[z % len(combination)]]
         combination.insert(z, node)
-        value += adjacency_matrix[combination[z - 1]][combination[z % cycle_size]]
-        value += adjacency_matrix[combination[z % cycle_size]][combination[(z + 1) % cycle_size]]
-        value = get_path_length(matrix, combination)
+        value += adjacency_matrix[combination[z - 1]][node]
+        value += adjacency_matrix[node][combination[(z + 1) % len(combination)]]
         comb.append((combination, value))
     return sorted(comb, key=operator.itemgetter(1))
 
@@ -103,12 +102,12 @@ def greedy_cycle(start_node):
 
 def greedy_cycle_with_partial_solution(partial_solution):
     order_list = partial_solution
-    value = get_path_length(adjacency_matrix, order_list)
+    dist = get_path_length(adjacency_matrix, order_list)
     for i in range(cycle_size - len(partial_solution)):
         temp = []
         for t in range(len(problem.node_coords)):
             if t not in order_list:
-                temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t, value))
+                temp.append(greedy_cycle_best_comb(adjacency_matrix, order_list, t, dist))
         order_list, dist = min(temp, key=operator.itemgetter(1))
     return order_list, dist
 
@@ -510,13 +509,10 @@ def ILS2(avg_mlsl_time, percentage_of_deleted_solution=0.2):
         to_be_deleted_from_beggining = first_vertex_idx_to_delete + int(percentage_of_deleted_solution * cycle_size)
         solution_after_perturbation = solution[:first_vertex_idx_to_delete]
         solution_after_perturbation += solution[to_be_deleted_from_beggining:]
-        time_of_greedy = time.time()
         solution_after_greedy, dist_after_greedy = greedy_cycle_with_partial_solution(solution_after_perturbation)
-        time_of_ls = time.time()
         solution_after_ls, dist_after_ls = steepest_local_search_edges_with_ordered_move_list(solution_after_greedy,
                                                                                               [x for x in range(no_of_nodes) if x not in solution_after_greedy],
                                                                                               dist_after_greedy)
-
         if dist_after_ls < dist:
             solution = solution_after_ls
             dist = dist_after_ls
