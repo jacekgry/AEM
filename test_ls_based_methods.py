@@ -5,7 +5,7 @@ from collections import defaultdict
 import numpy as np
 
 from aem import get_path_length, adjacency_matrix, problem, \
-    instance_name, save_graph, MSLS, ILS1, ILS2, cycle_size
+    instance_name, save_graph, MSLS, ILS1, ILS2, cycle_size, hybrid
 
 no_of_tests = 3
 results = defaultdict(list)
@@ -13,7 +13,7 @@ times = defaultdict(list)
 actual_distances = defaultdict(list)
 start_distances = []
 no_of_ls = defaultdict(list)
-methods = [ILS2]
+methods = [hybrid]
 
 for method in methods:
     for i in range(no_of_tests):
@@ -24,7 +24,7 @@ for method in methods:
             solution, dist = method()
         else:
             # solution, dist = method(np.mean(times['MSLS']))
-            solution, dist, ls = method(294.5)
+            solution, dist, ls = method(130)
             no_of_ls[method.__name__].append(ls)
             print('no of ls: ', ls)
 

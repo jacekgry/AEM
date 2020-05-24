@@ -87,6 +87,19 @@ def make_regret_comb(k, matrix, order, node):
     return [comb, regret]
 
 
+def mutate(parent1, parent2):
+    child = []
+    for vertex in parent1:
+        if vertex in parent2:
+            child.append(vertex)
+    rest_points_from_parents = [x for x in parent1 if x not in child]
+    rest_points_from_parents += [x for x in parent2 if x not in child]
+    k = cycle_size - len(child)
+    child += random.sample(rest_points_from_parents, k=k)
+    random.shuffle(child)
+    return child
+
+
 def greedy_cycle(start_node):
     order_list = [start_node]
 
@@ -520,10 +533,37 @@ def ILS2(avg_mlsl_time, percentage_of_deleted_solution=0.2):
     return solution, dist, no_of_ls
 
 
+def hybrid(avg_mlsl_time):
+    population = []
+    no_of_ls = 1
+    start_time = time.time()
+    for i in range(20):
+        new_start_solution = random.sample(range(len(problem.node_coords)), cycle_size)
+        rest_points = [x for x in range(no_of_nodes) if x not in new_start_solution]
+        start_distance = get_path_length(adjacency_matrix, new_start_solution)
+        solution, dist = steepest_local_search_edges_with_ordered_move_list(new_start_solution, rest_points, start_distance)
+        population.append([solution, dist])
+
+    while time.time() - start_time < avg_mlsl_time:
+        no_of_ls += 1
+        parent1, parent2 = random.sample(population, k=2)
+        child = mutate(parent1[0], parent2[0])
+        rest_points = [x for x in range(no_of_nodes) if x not in child]
+        start_distance = get_path_length(adjacency_matrix, child)
+        solution, dist = steepest_local_search_edges_with_ordered_move_list(child, rest_points, start_distance)
+        population = sorted(population, key=lambda x: x[1])
+        worst_distance = population[-1][1]
+        if worst_distance > dist:
+            population.remove(population[-1])
+            population.append([solution, dist])
+    population = sorted(population, key=lambda x: x[1])
+    return population[0][0], population[0][1], no_of_ls
+
+
 instance_name = sys.argv[1] if len(sys.argv) == 2 else 'kroB200'
 problem: tsp.Problem = tsp.load_problem(f'{instance_name}.tsp')
 cycle_size = round(int(np.ceil(len(problem.node_coords) / 2)))
-# cycle_size = 30
+# cycle_size = 20
 adjacency_matrix = make_adjacency_matrix(problem.node_coords)
 no_of_nodes = len(adjacency_matrix)
 nearest_vertices = get_nearest_vertices()
