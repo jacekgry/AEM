@@ -584,7 +584,7 @@ def genetic2(avg_mlsl_time):
     while time.time() - start_time < avg_mlsl_time:
         no_of_ls += 1
         parent1, parent2 = sorted(random.sample(population, k=4), key=lambda x: x[1])[:2]
-        child = mutate(parent1[0], parent2[0])
+        child = mutate2(parent1[0], parent2[0])
         rest_points = [x for x in range(no_of_nodes) if x not in child]
         start_distance = get_path_length(adjacency_matrix, child)
         solution, dist = steepest_local_search_edges_with_ordered_move_list(child, rest_points, start_distance)
